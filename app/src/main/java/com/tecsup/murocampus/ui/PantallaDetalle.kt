@@ -14,6 +14,23 @@ import com.tecsup.murocampus.viewmodel.UiState
 @Composable
 fun PantallaDetalle(vm: PostsViewModel, id: Int, modifier: Modifier = Modifier) {
     val estado by vm.detalle.collectAsStateWithLifecycle()
+    val eliminacion by vm.eliminacion.collectAsStateWithLifecycle()
+    var confirmar by remember { mutableStateOf(false) }
+    if (confirmar) {
+        AlertDialog(
+            onDismissRequest = { confirmar = false },
+            title = { Text("¿Eliminar publicación?") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmar = false
+                    vm.eliminar(id)
+                }) { Text("Eliminar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmar = false }) { Text("Cancelar") }
+            }
+        )
+    }
     Column(modifier) {
         when (val actual = estado) {
             UiState.Cargando -> Cargando("Cargando detalle…")
@@ -27,6 +44,16 @@ fun PantallaDetalle(vm: PostsViewModel, id: Int, modifier: Modifier = Modifier) 
                     Text(actual.datos.post.title, style = MaterialTheme.typography.headlineSmall)
                     Spacer(Modifier.height(8.dp))
                     Text(actual.datos.post.body)
+                    OutlinedButton(
+                        onClick = { confirmar = true },
+                        enabled = eliminacion != UiState.Cargando && eliminacion !is UiState.Exito<*>
+                    ) { Text("Eliminar") }
+                    when (val resultado = eliminacion) {
+                        null -> Unit
+                        UiState.Cargando -> Text("Eliminando…")
+                        is UiState.Exito -> Text("Eliminación simulada")
+                        is UiState.Error -> Text(resultado.mensaje, color = MaterialTheme.colorScheme.error)
+                    }
                 }
                 item {
                     HorizontalDivider(Modifier.padding(vertical = 8.dp))

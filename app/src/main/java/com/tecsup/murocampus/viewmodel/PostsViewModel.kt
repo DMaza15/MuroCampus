@@ -81,6 +81,8 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
 
     fun cerrarDetalle() {
         cargaDetalle?.cancel()
+        operacionEliminar?.cancel()
+        _eliminacion.value = null
         idDetalle = null
         _detalle.value = UiState.Cargando
     }
@@ -100,6 +102,18 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
     fun cerrarPublicacion() {
         envio?.cancel()
         _publicacion.value = null
+    }
+
+    private val _eliminacion = MutableStateFlow<UiState<Unit>?>(null)
+    val eliminacion = _eliminacion.asStateFlow()
+    private var operacionEliminar: Job? = null
+
+    fun eliminar(id: Int) {
+        if (idDetalle != id || operacionEliminar?.isActive == true) return
+        _eliminacion.value = UiState.Cargando
+        operacionEliminar = viewModelScope.launch {
+            _eliminacion.value = repo.eliminar(id).aEstado()
+        }
     }
 
     private fun <T> Result<T>.aEstado(): UiState<T> = fold(
