@@ -29,6 +29,13 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
     private val _usuarioFiltro = MutableStateFlow<Int?>(null)
     val usuarioFiltro = _usuarioFiltro.asStateFlow()
 
+    private val _busqueda = MutableStateFlow("")
+    val busqueda = _busqueda.asStateFlow()
+
+    fun buscar(consulta: String) {
+        _busqueda.value = consulta
+    }
+
     fun filtrar(userId: Int?) {
         if (_usuarioFiltro.value == userId) return
         _usuarioFiltro.value = userId

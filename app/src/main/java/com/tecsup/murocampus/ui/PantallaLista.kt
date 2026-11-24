@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -19,7 +20,16 @@ fun PantallaLista(vm: PostsViewModel, alAbrir: (Int) -> Unit, modifier: Modifier
 
     val usuario by vm.usuarioFiltro.collectAsStateWithLifecycle()
 
+    val consulta by vm.busqueda.collectAsStateWithLifecycle()
+
     Column(modifier) {
+        OutlinedTextField(
+            value = consulta,
+            onValueChange = vm::buscar,
+            label = { Text("Buscar por título") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+        )
         LazyRow(
             contentPadding = PaddingValues(horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -40,8 +50,9 @@ fun PantallaLista(vm: PostsViewModel, alAbrir: (Int) -> Unit, modifier: Modifier
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                if (actual.datos.isEmpty()) item { Text("Sin publicaciones") }
-                items(actual.datos, key = { it.id }) { post ->
+                val visibles = actual.datos.filter { it.title.contains(consulta.trim(), ignoreCase = true) }
+                if (visibles.isEmpty()) item { Text("Sin publicaciones") }
+                items(visibles, key = { it.id }) { post ->
                     TarjetaPost(post, alAbrir = { alAbrir(post.id) })
                 }
             }
