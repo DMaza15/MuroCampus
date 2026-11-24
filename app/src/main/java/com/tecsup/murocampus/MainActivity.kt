@@ -3,8 +3,11 @@ package com.tecsup.murocampus
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -21,6 +24,12 @@ class MainActivity : ComponentActivity() {
         val factory = PostsViewModelFactory(PostRepositoryRemote(RetrofitClient.api))
         setContent {
             val vm: PostsViewModel = viewModel(factory = factory)
+            var seleccionado by rememberSaveable { mutableStateOf<Int?>(null) }
+            BackHandler(seleccionado != null) {
+                vm.cerrarDetalle()
+                seleccionado = null
+            }
+            LaunchedEffect(seleccionado) { seleccionado?.let(vm::abrir) }
             MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFF164682))) {
                 Scaffold(topBar = {
                     TopAppBar(
@@ -31,7 +40,13 @@ class MainActivity : ComponentActivity() {
                         )
                     )
                 }) { padding ->
-                    PantallaLista(vm, alAbrir = {}, modifier = Modifier.padding(padding))
+                    val id = seleccionado
+                    val contenido = Modifier.padding(padding)
+                    if (id == null) {
+                        PantallaLista(vm, alAbrir = { seleccionado = it }, modifier = contenido)
+                    } else {
+                        PantallaDetalle(vm, id, modifier = contenido)
+                    }
                 }
             }
         }
