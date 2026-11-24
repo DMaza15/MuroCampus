@@ -25,15 +25,26 @@ class PostsViewModel(private val repo: PostRepository) : ViewModel() {
     private var cargaDetalle: Job? = null
     private var idDetalle: Int? = null
 
+    private val _usuarioFiltro = MutableStateFlow<Int?>(null)
+    val usuarioFiltro = _usuarioFiltro.asStateFlow()
+
+    fun filtrar(userId: Int?) {
+        if (_usuarioFiltro.value == userId) return
+        _usuarioFiltro.value = userId
+        cargar()
+    }
+
     init {
         cargar()
     }
 
     fun cargar() {
+        val usuario = _usuarioFiltro.value
         cargaLista?.cancel()
         cargaLista = viewModelScope.launch {
             _lista.value = UiState.Cargando
-            _lista.value = repo.listar().aEstado()
+            val resultado = if (usuario == null) repo.listar() else repo.porUsuario(usuario)
+            _lista.value = resultado.aEstado()
         }
     }
 
