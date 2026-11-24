@@ -13,6 +13,12 @@ object RetrofitClient {
 
     val api: PostApi by lazy {
         val cliente = OkHttpClient.Builder().apply {
+            addInterceptor { chain ->
+                val solicitud = chain.request().newBuilder()
+                    .header("Accept", "application/json")
+                    .build()
+                chain.proceed(solicitud)
+            }
             if (BuildConfig.DEBUG) {
                 addInterceptor(HttpLoggingInterceptor().apply {
                     level = HttpLoggingInterceptor.Level.BODY
