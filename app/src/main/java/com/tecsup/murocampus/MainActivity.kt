@@ -25,13 +25,27 @@ class MainActivity : ComponentActivity() {
         setContent {
             val vm: PostsViewModel = viewModel(factory = factory)
             var seleccionado by rememberSaveable { mutableStateOf<Int?>(null) }
-            BackHandler(seleccionado != null) {
-                vm.cerrarDetalle()
-                seleccionado = null
+            var creando by rememberSaveable { mutableStateOf(false) }
+            BackHandler(seleccionado != null || creando) {
+                if (creando) {
+                    vm.cerrarPublicacion()
+                    creando = false
+                } else {
+                    vm.cerrarDetalle()
+                    seleccionado = null
+                }
             }
             LaunchedEffect(seleccionado) { seleccionado?.let(vm::abrir) }
             MaterialTheme(colorScheme = lightColorScheme(primary = Color(0xFF164682))) {
-                Scaffold(topBar = {
+                Scaffold(
+                    floatingActionButton = {
+                        if (!creando && seleccionado == null) {
+                            FloatingActionButton(onClick = { creando = true }) {
+                                Text("+", style = MaterialTheme.typography.headlineSmall)
+                            }
+                        }
+                    },
+                    topBar = {
                     TopAppBar(
                         title = { Text("MuroCampus") },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -42,10 +56,10 @@ class MainActivity : ComponentActivity() {
                 }) { padding ->
                     val id = seleccionado
                     val contenido = Modifier.padding(padding)
-                    if (id == null) {
-                        PantallaLista(vm, alAbrir = { seleccionado = it }, modifier = contenido)
-                    } else {
-                        PantallaDetalle(vm, id, modifier = contenido)
+                    when {
+                        creando -> PantallaCrear(vm, modifier = contenido)
+                        id != null -> PantallaDetalle(vm, id, modifier = contenido)
+                        else -> PantallaLista(vm, alAbrir = { seleccionado = it }, modifier = contenido)
                     }
                 }
             }
